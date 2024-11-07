@@ -9,6 +9,7 @@ package proto
 import (
 	fmt "fmt"
 	sdk_go "github.com/restatedev/sdk-go"
+	ingress "github.com/restatedev/sdk-go/ingress"
 )
 
 // GreeterClient is the client API for helloworld.Greeter service.
@@ -36,7 +37,34 @@ func (c *greeterClient) SayHello(opts ...sdk_go.ClientOption) sdk_go.Client[*Hel
 	return sdk_go.WithRequestType[*HelloRequest](sdk_go.Service[*HelloResponse](c.ctx, "helloworld.Greeter", "SayHello", cOpts...))
 }
 
-// GreeterServer is the server API for helloworld.Greeter service.
+// GreeterIngressClient is the ingress client API for Greeter service.
+type GreeterIngressClient interface {
+	SayHello(opts ...client.IngressClientOption) client.IngressClient[*HelloRequest, *HelloResponse]
+}
+
+type greeterIngressClient struct {
+	ctx     context.Context
+	options []client.IngressClientOption
+}
+
+// NewGreeterIngressClient must be called with a ctx returned from github.com/restatedev/sdk-go/client.Connect
+func NewGreeterIngressClient(ctx context.Context, opts ...client.IngressClientOption) GreeterIngressClient {
+	cOpts := append([]client.IngressClientOption{sdk_go.WithProtoJSON}, opts...)
+	return &greeterIngressClient{
+		ctx,
+		cOpts,
+	}
+}
+
+func (c *greeterIngressClient) SayHello(opts ...client.IngressClientOption) client.IngressClient[*HelloRequest, *HelloResponse] {
+	cOpts := c.options
+	if len(opts) > 0 {
+		cOpts = append(append([]client.IngressClientOption{}, cOpts...), opts...)
+	}
+	return client.WithRequestType[*HelloRequest](client.Service[*HelloResponse](c.ctx, "Greeter", "SayHello", cOpts...))
+}
+
+// GreeterServer is the server API for Greeter service.
 // All implementations should embed UnimplementedGreeterServer
 // for forward compatibility.
 type GreeterServer interface {
@@ -134,7 +162,66 @@ func (c *counterClient) Watch(opts ...sdk_go.ClientOption) sdk_go.Client[*WatchR
 	return sdk_go.WithRequestType[*WatchRequest](sdk_go.Object[*GetResponse](c.ctx, "helloworld.Counter", c.key, "Watch", cOpts...))
 }
 
-// CounterServer is the server API for helloworld.Counter service.
+// CounterIngressClient is the ingress client API for Counter service.
+type CounterIngressClient interface {
+	// Mutate the value
+	Add(opts ...client.IngressClientOption) client.IngressClient[*AddRequest, *GetResponse]
+	// Get the current value
+	Get(opts ...client.IngressClientOption) client.IngressClient[*GetRequest, *GetResponse]
+	// Internal method to store an awakeable ID for the Watch method
+	AddWatcher(opts ...client.IngressClientOption) client.IngressClient[*AddWatcherRequest, *AddWatcherResponse]
+	// Wait for the counter to change and then return the new value
+	Watch(opts ...client.IngressClientOption) client.IngressClient[*WatchRequest, *GetResponse]
+}
+
+type counterIngressClient struct {
+	ctx     context.Context
+	key     string
+	options []client.IngressClientOption
+}
+
+// NewCounterIngressClient must be called with a ctx returned from github.com/restatedev/sdk-go/client.Connect
+func NewCounterIngressClient(ctx context.Context, key string, opts ...client.IngressClientOption) CounterIngressClient {
+	cOpts := append([]client.IngressClientOption{sdk_go.WithProtoJSON}, opts...)
+	return &counterIngressClient{
+		ctx,
+		key,
+		cOpts,
+	}
+}
+func (c *counterIngressClient) Add(opts ...client.IngressClientOption) client.IngressClient[*AddRequest, *GetResponse] {
+	cOpts := c.options
+	if len(opts) > 0 {
+		cOpts = append(append([]client.IngressClientOption{}, cOpts...), opts...)
+	}
+	return client.WithRequestType[*AddRequest](client.Object[*GetResponse](c.ctx, "Counter", c.key, "Add", cOpts...))
+}
+
+func (c *counterIngressClient) Get(opts ...client.IngressClientOption) client.IngressClient[*GetRequest, *GetResponse] {
+	cOpts := c.options
+	if len(opts) > 0 {
+		cOpts = append(append([]client.IngressClientOption{}, cOpts...), opts...)
+	}
+	return client.WithRequestType[*GetRequest](client.Object[*GetResponse](c.ctx, "Counter", c.key, "Get", cOpts...))
+}
+
+func (c *counterIngressClient) AddWatcher(opts ...client.IngressClientOption) client.IngressClient[*AddWatcherRequest, *AddWatcherResponse] {
+	cOpts := c.options
+	if len(opts) > 0 {
+		cOpts = append(append([]client.IngressClientOption{}, cOpts...), opts...)
+	}
+	return client.WithRequestType[*AddWatcherRequest](client.Object[*AddWatcherResponse](c.ctx, "Counter", c.key, "AddWatcher", cOpts...))
+}
+
+func (c *counterIngressClient) Watch(opts ...client.IngressClientOption) client.IngressClient[*WatchRequest, *GetResponse] {
+	cOpts := c.options
+	if len(opts) > 0 {
+		cOpts = append(append([]client.IngressClientOption{}, cOpts...), opts...)
+	}
+	return client.WithRequestType[*WatchRequest](client.Object[*GetResponse](c.ctx, "Counter", c.key, "Watch", cOpts...))
+}
+
+// CounterServer is the server API for Counter service.
 // All implementations should embed UnimplementedCounterServer
 // for forward compatibility.
 type CounterServer interface {
