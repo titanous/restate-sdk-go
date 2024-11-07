@@ -350,16 +350,14 @@ func clientSignature(g *protogen.GeneratedFile, method *protogen.Method, ingress
 	var clientName protogen.GoIdent
 	if ingress {
 		clientName = ingressPackage.Ident("Requester")
-		s := method.GoName + "() ("
+		s := method.GoName + "() "
 		s += g.QualifiedGoIdent(clientName) + "[" + "*" + g.QualifiedGoIdent(method.Input.GoIdent) + ", *" + g.QualifiedGoIdent(method.Output.GoIdent) + "]"
-		s += ")"
 		return s
 	} else {
 		clientName = sdkPackage.Ident("Client")
 		s := method.GoName + "("
-		s += "opts ..." + g.QualifiedGoIdent(sdkPackage.Ident("ClientOption")) + ") ("
+		s += "opts ..." + g.QualifiedGoIdent(sdkPackage.Ident("ClientOption")) + ") "
 		s += g.QualifiedGoIdent(clientName) + "[" + "*" + g.QualifiedGoIdent(method.Input.GoIdent) + ", *" + g.QualifiedGoIdent(method.Output.GoIdent) + "]"
-		s += ")"
 		return s
 	}
 }
