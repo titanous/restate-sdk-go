@@ -39,32 +39,23 @@ func (c *greeterClient) SayHello(opts ...sdk_go.ClientOption) sdk_go.Client[*Hel
 
 // GreeterIngressClient is the ingress client API for Greeter service.
 type GreeterIngressClient interface {
-	SayHello(opts ...client.IngressClientOption) client.IngressClient[*HelloRequest, *HelloResponse]
+	SayHello() ingress.Requester[*HelloRequest, *HelloResponse]
 }
 
 type greeterIngressClient struct {
-	ctx     context.Context
-	options []client.IngressClientOption
+	client *ingress.Client
 }
 
-// NewGreeterIngressClient must be called with a ctx returned from github.com/restatedev/sdk-go/client.Connect
-func NewGreeterIngressClient(ctx context.Context, opts ...client.IngressClientOption) GreeterIngressClient {
-	cOpts := append([]client.IngressClientOption{sdk_go.WithProtoJSON}, opts...)
+func NewGreeterIngressClient(client *ingress.Client) GreeterIngressClient {
 	return &greeterIngressClient{
-		ctx,
-		cOpts,
+		client,
 	}
 }
-
-func (c *greeterIngressClient) SayHello(opts ...client.IngressClientOption) client.IngressClient[*HelloRequest, *HelloResponse] {
-	cOpts := c.options
-	if len(opts) > 0 {
-		cOpts = append(append([]client.IngressClientOption{}, cOpts...), opts...)
-	}
-	return client.WithRequestType[*HelloRequest](client.Service[*HelloResponse](c.ctx, "Greeter", "SayHello", cOpts...))
+func (c *greeterIngressClient) SayHello() ingress.Requester[*HelloRequest, *HelloResponse] {
+	return ingress.Service[*HelloRequest, *HelloResponse](c.client, "Greeter", "SayHello")
 }
 
-// GreeterServer is the server API for Greeter service.
+// GreeterServer is the server API for helloworld.Greeter service.
 // All implementations should embed UnimplementedGreeterServer
 // for forward compatibility.
 type GreeterServer interface {
@@ -165,63 +156,43 @@ func (c *counterClient) Watch(opts ...sdk_go.ClientOption) sdk_go.Client[*WatchR
 // CounterIngressClient is the ingress client API for Counter service.
 type CounterIngressClient interface {
 	// Mutate the value
-	Add(opts ...client.IngressClientOption) client.IngressClient[*AddRequest, *GetResponse]
+	Add() ingress.Requester[*AddRequest, *GetResponse]
 	// Get the current value
-	Get(opts ...client.IngressClientOption) client.IngressClient[*GetRequest, *GetResponse]
+	Get() ingress.Requester[*GetRequest, *GetResponse]
 	// Internal method to store an awakeable ID for the Watch method
-	AddWatcher(opts ...client.IngressClientOption) client.IngressClient[*AddWatcherRequest, *AddWatcherResponse]
+	AddWatcher() ingress.Requester[*AddWatcherRequest, *AddWatcherResponse]
 	// Wait for the counter to change and then return the new value
-	Watch(opts ...client.IngressClientOption) client.IngressClient[*WatchRequest, *GetResponse]
+	Watch() ingress.Requester[*WatchRequest, *GetResponse]
 }
 
 type counterIngressClient struct {
-	ctx     context.Context
-	key     string
-	options []client.IngressClientOption
+	client *ingress.Client
+	key    string
 }
 
-// NewCounterIngressClient must be called with a ctx returned from github.com/restatedev/sdk-go/client.Connect
-func NewCounterIngressClient(ctx context.Context, key string, opts ...client.IngressClientOption) CounterIngressClient {
-	cOpts := append([]client.IngressClientOption{sdk_go.WithProtoJSON}, opts...)
+func NewCounterIngressClient(client *ingress.Client, key string) CounterIngressClient {
 	return &counterIngressClient{
-		ctx,
+		client,
 		key,
-		cOpts,
 	}
 }
-func (c *counterIngressClient) Add(opts ...client.IngressClientOption) client.IngressClient[*AddRequest, *GetResponse] {
-	cOpts := c.options
-	if len(opts) > 0 {
-		cOpts = append(append([]client.IngressClientOption{}, cOpts...), opts...)
-	}
-	return client.WithRequestType[*AddRequest](client.Object[*GetResponse](c.ctx, "Counter", c.key, "Add", cOpts...))
+func (c *counterIngressClient) Add() ingress.Requester[*AddRequest, *GetResponse] {
+	return ingress.Object[*AddRequest, *GetResponse](c.client, "Counter", c.key, "Add")
 }
 
-func (c *counterIngressClient) Get(opts ...client.IngressClientOption) client.IngressClient[*GetRequest, *GetResponse] {
-	cOpts := c.options
-	if len(opts) > 0 {
-		cOpts = append(append([]client.IngressClientOption{}, cOpts...), opts...)
-	}
-	return client.WithRequestType[*GetRequest](client.Object[*GetResponse](c.ctx, "Counter", c.key, "Get", cOpts...))
+func (c *counterIngressClient) Get() ingress.Requester[*GetRequest, *GetResponse] {
+	return ingress.Object[*GetRequest, *GetResponse](c.client, "Counter", c.key, "Get")
 }
 
-func (c *counterIngressClient) AddWatcher(opts ...client.IngressClientOption) client.IngressClient[*AddWatcherRequest, *AddWatcherResponse] {
-	cOpts := c.options
-	if len(opts) > 0 {
-		cOpts = append(append([]client.IngressClientOption{}, cOpts...), opts...)
-	}
-	return client.WithRequestType[*AddWatcherRequest](client.Object[*AddWatcherResponse](c.ctx, "Counter", c.key, "AddWatcher", cOpts...))
+func (c *counterIngressClient) AddWatcher() ingress.Requester[*AddWatcherRequest, *AddWatcherResponse] {
+	return ingress.Object[*AddWatcherRequest, *AddWatcherResponse](c.client, "Counter", c.key, "AddWatcher")
 }
 
-func (c *counterIngressClient) Watch(opts ...client.IngressClientOption) client.IngressClient[*WatchRequest, *GetResponse] {
-	cOpts := c.options
-	if len(opts) > 0 {
-		cOpts = append(append([]client.IngressClientOption{}, cOpts...), opts...)
-	}
-	return client.WithRequestType[*WatchRequest](client.Object[*GetResponse](c.ctx, "Counter", c.key, "Watch", cOpts...))
+func (c *counterIngressClient) Watch() ingress.Requester[*WatchRequest, *GetResponse] {
+	return ingress.Object[*WatchRequest, *GetResponse](c.client, "Counter", c.key, "Watch")
 }
 
-// CounterServer is the server API for Counter service.
+// CounterServer is the server API for helloworld.Counter service.
 // All implementations should embed UnimplementedCounterServer
 // for forward compatibility.
 type CounterServer interface {
@@ -331,53 +302,37 @@ func (c *workflowClient) Status(opts ...sdk_go.ClientOption) sdk_go.Client[*Stat
 // WorkflowIngressClient is the ingress client API for Workflow service.
 type WorkflowIngressClient interface {
 	// Execute the workflow
-	Run(opts ...client.IngressClientOption) client.IngressClient[*RunRequest, *RunResponse]
+	Run() ingress.Requester[*RunRequest, *RunResponse]
 	// Unblock the workflow
-	Finish(opts ...client.IngressClientOption) client.IngressClient[*FinishRequest, *FinishResponse]
+	Finish() ingress.Requester[*FinishRequest, *FinishResponse]
 	// Check the current status
-	Status(opts ...client.IngressClientOption) client.IngressClient[*StatusRequest, *StatusResponse]
+	Status() ingress.Requester[*StatusRequest, *StatusResponse]
 }
 
 type workflowIngressClient struct {
-	ctx        context.Context
+	client     *ingress.Client
 	workflowID string
-	options    []client.IngressClientOption
 }
 
-// NewWorkflowIngressClient must be called with a ctx returned from github.com/restatedev/sdk-go/client.Connect
-func NewWorkflowIngressClient(ctx context.Context, workflowID string, opts ...client.IngressClientOption) WorkflowIngressClient {
-	cOpts := append([]client.IngressClientOption{sdk_go.WithProtoJSON}, opts...)
+func NewWorkflowIngressClient(client *ingress.Client, workflowID string) WorkflowIngressClient {
 	return &workflowIngressClient{
-		ctx,
+		client,
 		workflowID,
-		cOpts,
 	}
 }
-func (c *workflowIngressClient) Run(opts ...client.IngressClientOption) client.IngressClient[*RunRequest, *RunResponse] {
-	cOpts := c.options
-	if len(opts) > 0 {
-		cOpts = append(append([]client.IngressClientOption{}, cOpts...), opts...)
-	}
-	return client.WithRequestType[*RunRequest](client.Workflow[*RunResponse](c.ctx, "Workflow", c.workflowID, "Run", cOpts...))
+func (c *workflowIngressClient) Run() ingress.Requester[*RunRequest, *RunResponse] {
+	return ingress.Workflow[*RunRequest, *RunResponse](c.client, "Workflow", c.workflowID, "Run")
 }
 
-func (c *workflowIngressClient) Finish(opts ...client.IngressClientOption) client.IngressClient[*FinishRequest, *FinishResponse] {
-	cOpts := c.options
-	if len(opts) > 0 {
-		cOpts = append(append([]client.IngressClientOption{}, cOpts...), opts...)
-	}
-	return client.WithRequestType[*FinishRequest](client.Workflow[*FinishResponse](c.ctx, "Workflow", c.workflowID, "Finish", cOpts...))
+func (c *workflowIngressClient) Finish() ingress.Requester[*FinishRequest, *FinishResponse] {
+	return ingress.Workflow[*FinishRequest, *FinishResponse](c.client, "Workflow", c.workflowID, "Finish")
 }
 
-func (c *workflowIngressClient) Status(opts ...client.IngressClientOption) client.IngressClient[*StatusRequest, *StatusResponse] {
-	cOpts := c.options
-	if len(opts) > 0 {
-		cOpts = append(append([]client.IngressClientOption{}, cOpts...), opts...)
-	}
-	return client.WithRequestType[*StatusRequest](client.Workflow[*StatusResponse](c.ctx, "Workflow", c.workflowID, "Status", cOpts...))
+func (c *workflowIngressClient) Status() ingress.Requester[*StatusRequest, *StatusResponse] {
+	return ingress.Workflow[*StatusRequest, *StatusResponse](c.client, "Workflow", c.workflowID, "Status")
 }
 
-// WorkflowServer is the server API for Workflow service.
+// WorkflowServer is the server API for helloworld.Workflow service.
 // All implementations should embed UnimplementedWorkflowServer
 // for forward compatibility.
 type WorkflowServer interface {
