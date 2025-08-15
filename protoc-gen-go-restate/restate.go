@@ -47,7 +47,7 @@ func generateIngressClientStruct(g *protogen.GeneratedFile, service *protogen.Se
 }
 
 func generateNewClientDefinitions(g *protogen.GeneratedFile, service *protogen.Service, clientName string) {
-	g.P("cOpts := append([]", sdkPackage.Ident("ClientOption"), "{", sdkPackage.Ident("WithProtoJSON"), "}, opts...)")
+	g.P("cOpts := append([]", sdkPackage.Ident("ClientOption"), "{", sdkPackage.Ident("WithProto"), "}, opts...)")
 	g.P("return &", unexport(clientName), "{")
 	g.P("ctx,")
 	serviceType := proto.GetExtension(service.Desc.Options().(*descriptorpb.ServiceOptions), sdk.E_ServiceType).(sdk.ServiceType)
@@ -336,7 +336,7 @@ func genService(gen *protogen.Plugin, g *protogen.GeneratedFile, service *protog
 	g.P("if t, ok := srv.(interface { testEmbeddedByValue() }); ok {")
 	g.P("t.testEmbeddedByValue()")
 	g.P("}")
-	g.P("sOpts := append([]", sdkPackage.Ident("ServiceDefinitionOption"), "{", sdkPackage.Ident("WithProtoJSON"), "}, opts...)")
+	g.P("sOpts := append([]", sdkPackage.Ident("ServiceDefinitionOption"), "{", sdkPackage.Ident("WithProto"), "}, opts...)")
 	g.P("router := ", newRouterType(gen, g, service), `("`, serviceName(service), `", sOpts...)`)
 	for _, method := range service.Methods {
 		g.P(`router = router.Handler("`, methodName(method), `",`, newHandlerType(gen, g, method), "(srv.", method.GoName, "))")
@@ -378,11 +378,11 @@ func genClientMethod(gen *protogen.Plugin, g *protogen.GeneratedFile, method *pr
 		var getClient string
 		switch serviceType {
 		case sdk.ServiceType_SERVICE:
-			getClient = g.QualifiedGoIdent(ingressPackage.Ident("Service")) + `[*` + g.QualifiedGoIdent(method.Input.GoIdent) + `, *` + g.QualifiedGoIdent(method.Output.GoIdent) + `](c.client, "` + service.GoName + `", "` + method.GoName + `")`
+			getClient = g.QualifiedGoIdent(ingressPackage.Ident("Service")) + `[*` + g.QualifiedGoIdent(method.Input.GoIdent) + `, *` + g.QualifiedGoIdent(method.Output.GoIdent) + `](c.client, "` + serviceName(service) + `", "` + methodName(method) + `")`
 		case sdk.ServiceType_VIRTUAL_OBJECT:
-			getClient = g.QualifiedGoIdent(ingressPackage.Ident("Object")) + `[*` + g.QualifiedGoIdent(method.Input.GoIdent) + `, *` + g.QualifiedGoIdent(method.Output.GoIdent) + `](c.client, "` + service.GoName + `", c.key, "` + method.GoName + `")`
+			getClient = g.QualifiedGoIdent(ingressPackage.Ident("Object")) + `[*` + g.QualifiedGoIdent(method.Input.GoIdent) + `, *` + g.QualifiedGoIdent(method.Output.GoIdent) + `](c.client, "` + serviceName(service) + `", c.key, "` + methodName(method) + `")`
 		case sdk.ServiceType_WORKFLOW:
-			getClient = g.QualifiedGoIdent(ingressPackage.Ident("Workflow")) + `[*` + g.QualifiedGoIdent(method.Input.GoIdent) + `, *` + g.QualifiedGoIdent(method.Output.GoIdent) + `](c.client, "` + service.GoName + `", c.workflowID, "` + method.GoName + `")`
+			getClient = g.QualifiedGoIdent(ingressPackage.Ident("Workflow")) + `[*` + g.QualifiedGoIdent(method.Input.GoIdent) + `, *` + g.QualifiedGoIdent(method.Output.GoIdent) + `](c.client, "` + serviceName(service) + `", c.workflowID, "` + methodName(method) + `")`
 		default:
 			gen.Error(fmt.Errorf("Unexpected service type: %s", serviceType.String()))
 			return
