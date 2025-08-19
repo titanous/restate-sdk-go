@@ -184,35 +184,38 @@ func Reflect(rcvr any, opts ...options.ServiceDefinitionOption) ServiceDefinitio
 
 		switch def := definition.(type) {
 		case *service:
+			codec := def.GetOptions().DefaultCodec
 			def.Handler(mname, &reflectHandler{
 				fn:          method.Func,
 				receiver:    val,
 				input:       input,
 				output:      output,
 				hasError:    hasError,
-				options:     options.HandlerOptions{},
+				options:     options.HandlerOptions{Codec: codec},
 				handlerType: nil,
 			},
 			)
 		case *object:
+			codec := def.GetOptions().DefaultCodec
 			def.Handler(mname, &reflectHandler{
 				fn:          method.Func,
 				receiver:    val,
 				input:       input,
 				output:      output,
 				hasError:    hasError,
-				options:     options.HandlerOptions{},
+				options:     options.HandlerOptions{Codec: codec},
 				handlerType: &handlerType,
 			},
 			)
 		case *workflow:
+			codec := def.GetOptions().DefaultCodec
 			def.Handler(mname, &reflectHandler{
 				fn:          method.Func,
 				receiver:    val,
 				input:       input,
 				output:      output,
 				hasError:    hasError,
-				options:     options.HandlerOptions{},
+				options:     options.HandlerOptions{Codec: codec},
 				handlerType: &handlerType,
 			},
 			)
