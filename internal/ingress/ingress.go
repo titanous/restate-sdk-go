@@ -63,7 +63,9 @@ func (c *Client) Request(ctx context.Context, params IngressParams, input, outpu
 func (c *Client) Send(ctx context.Context, params IngressParams, input any, sendOpts options.IngressSendOptions) Invocation {
 	url := fmt.Sprintf("%s/%s", makeIngressUrl(params), "send")
 	var output Invocation
-	err := c.do(ctx, http.MethodPost, url, input, &output, sendOptionsToIngressOpts(sendOpts))
+	// The Send endpoint always returns JSON for the Invocation metadata,
+	// so we need to use a special version that forces JSON for the response
+	err := c.doSend(ctx, http.MethodPost, url, input, &output, sendOptionsToIngressOpts(sendOpts))
 	if err != nil {
 		output.Error = err
 	}
@@ -86,6 +88,24 @@ func (c *Client) Output(ctx context.Context, params IngressAttachParams, output 
 	return c.do(ctx, http.MethodGet, fmt.Sprintf("%s/output", path), restate.Void{}, output, ingressOpts{})
 }
 
+// doSend is like do, but always uses JSON codec for the response regardless of the configured codec
+// This is needed for Send() which returns Invocation metadata that is always JSON
+func (c *Client) doSend(ctx context.Context, httpMethod, path string, requestData any, responseData any, opts ingressOpts) error {
+	// Establish the codec to use for the request
+	requestCodec := opts.Codec
+	if requestCodec == nil {
+		requestCodec = c.clientOpts.Codec
+	}
+	if requestCodec == nil {
+		requestCodec = encoding.JSONCodec
+	}
+
+	// Response is always JSON for Send endpoint
+	responseCodec := encoding.JSONCodec
+
+	return c.doWithCodecs(ctx, httpMethod, path, requestData, responseData, opts, requestCodec, responseCodec)
+}
+
 func (c *Client) do(ctx context.Context, httpMethod, path string, requestData any, responseData any, opts ingressOpts) error {
 	// Establish the codec to use
 	codec := opts.Codec
@@ -96,8 +116,12 @@ func (c *Client) do(ctx context.Context, httpMethod, path string, requestData an
 		codec = encoding.JSONCodec
 	}
 
+	return c.doWithCodecs(ctx, httpMethod, path, requestData, responseData, opts, codec, codec)
+}
+
+func (c *Client) doWithCodecs(ctx context.Context, httpMethod, path string, requestData any, responseData any, opts ingressOpts, requestCodec, responseCodec encoding.PayloadCodec) error {
 	// marshal the request data if provided
-	requestBodyBuf, err := encoding.Marshal(codec, requestData)
+	requestBodyBuf, err := encoding.Marshal(requestCodec, requestData)
 	if err != nil {
 		return fmt.Errorf("failed to marshal request data: %w", err)
 	}
@@ -115,7 +139,7 @@ func (c *Client) do(ctx context.Context, httpMethod, path string, requestData an
 	req = req.WithContext(ctx)
 
 	// Figure out the content type
-	inputPayloadMetadata := encoding.InputPayloadFor(codec, requestData)
+	inputPayloadMetadata := encoding.InputPayloadFor(requestCodec, requestData)
 	if inputPayloadMetadata != nil && inputPayloadMetadata.ContentType != nil {
 		req.Header.Set("Content-Type", *inputPayloadMetadata.ContentType)
 	}
@@ -179,7 +203,7 @@ func (c *Client) do(ctx context.Context, httpMethod, path string, requestData an
 	}
 
 	if responseData != nil {
-		if err = encoding.Unmarshal(codec, resBody, responseData); err != nil {
+		if err = encoding.Unmarshal(responseCodec, resBody, responseData); err != nil {
 			return fmt.Errorf("failed to unmarshal response data: %w", err)
 		}
 	}
