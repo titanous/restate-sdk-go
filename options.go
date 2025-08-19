@@ -37,6 +37,7 @@ var _ options.AwakeableOption = withCodec{}
 var _ options.ResolveAwakeableOption = withCodec{}
 var _ options.ClientOption = withCodec{}
 var _ options.AttachOption = withCodec{}
+var _ options.PromiseOption = withCodec{}
 
 func (w withCodec) BeforeGet(opts *options.GetOptions)             { opts.Codec = w.codec }
 func (w withCodec) BeforeSet(opts *options.SetOptions)             { opts.Codec = w.codec }
@@ -45,8 +46,9 @@ func (w withCodec) BeforeAwakeable(opts *options.AwakeableOptions) { opts.Codec 
 func (w withCodec) BeforeResolveAwakeable(opts *options.ResolveAwakeableOptions) {
 	opts.Codec = w.codec
 }
-func (w withCodec) BeforeClient(opts *options.ClientOptions) { opts.Codec = w.codec }
-func (w withCodec) BeforeAttach(opts *options.AttachOptions) { opts.Codec = w.codec }
+func (w withCodec) BeforeClient(opts *options.ClientOptions)   { opts.Codec = w.codec }
+func (w withCodec) BeforeAttach(opts *options.AttachOptions)   { opts.Codec = w.codec }
+func (w withCodec) BeforePromise(opts *options.PromiseOptions) { opts.Codec = w.codec }
 
 // WithCodec is an option that can be provided to many different functions that perform (de)serialisation
 // in order to specify a custom codec with which to (de)serialise instead of the default of JSON.
@@ -66,6 +68,7 @@ var _ options.ServiceDefinitionOption = withPayloadCodec{}
 var _ options.IngressClientOption = withPayloadCodec{}
 var _ options.IngressRequestOption = withPayloadCodec{}
 var _ options.IngressSendOption = withPayloadCodec{}
+var _ options.PromiseOption = withPayloadCodec{}
 
 func (w withPayloadCodec) BeforeHandler(opts *options.HandlerOptions) {
 	opts.Codec = w.codec
@@ -80,6 +83,9 @@ func (w withPayloadCodec) BeforeIngressRequest(opts *options.IngressRequestOptio
 	opts.Codec = w.codec
 }
 func (w withPayloadCodec) BeforeIngressSend(opts *options.IngressSendOptions) {
+	opts.Codec = w.codec
+}
+func (w withPayloadCodec) BeforePromise(opts *options.PromiseOptions) {
 	opts.Codec = w.codec
 }
 
