@@ -2,6 +2,7 @@ package restatecontext
 
 import (
 	"fmt"
+
 	"github.com/restatedev/sdk-go/encoding"
 	"github.com/restatedev/sdk-go/internal/errors"
 	pbinternal "github.com/restatedev/sdk-go/internal/generated"
@@ -116,7 +117,7 @@ func (d *durablePromise) Resolve(value any) error {
 func (d *durablePromise) Reject(reason error) error {
 	failure := pbinternal.Failure{}
 	failure.SetCode(uint32(errors.ErrorCode(reason)))
-	failure.SetMessage(reason.Error())
+	failure.SetMessage(errors.ErrorMessage(reason))
 
 	input := pbinternal.VmSysPromiseCompleteParameters{}
 	input.SetId(d.key)

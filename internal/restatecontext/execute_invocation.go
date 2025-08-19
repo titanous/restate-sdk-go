@@ -3,13 +3,14 @@ package restatecontext
 import (
 	"context"
 	"fmt"
+	"io"
+	"log/slog"
+	"runtime/debug"
+
 	"github.com/restatedev/sdk-go/internal/errors"
 	pbinternal "github.com/restatedev/sdk-go/internal/generated"
 	"github.com/restatedev/sdk-go/internal/log"
 	"github.com/restatedev/sdk-go/internal/statemachine"
-	"io"
-	"log/slog"
-	"runtime/debug"
 )
 
 func ExecuteInvocation(ctx context.Context, logger *slog.Logger, stateMachine *statemachine.StateMachine, conn io.ReadWriteCloser, handler Handler, dropReplayLogs bool, logHandler slog.Handler, attemptHeaders map[string][]string) error {
@@ -77,7 +78,7 @@ func invoke(restateCtx *ctx, handler Handler, logger *slog.Logger) {
 
 		failure := pbinternal.Failure{}
 		failure.SetCode(uint32(errors.ErrorCode(err)))
-		failure.SetMessage(err.Error())
+		failure.SetMessage(errors.ErrorMessage(err))
 		outputParameters := pbinternal.VmSysWriteOutputParameters{}
 		outputParameters.SetFailure(&failure)
 		if err := restateCtx.stateMachine.SysWriteOutput(restateCtx, &outputParameters); err != nil {

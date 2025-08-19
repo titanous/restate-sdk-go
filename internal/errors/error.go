@@ -29,6 +29,15 @@ func ErrorCode(err error) Code {
 	return 500
 }
 
+func ErrorMessage(err error) string {
+	var e *CodeError
+	if errors.As(err, &e) {
+		return e.Inner.Error()
+	}
+
+	return err.Error()
+}
+
 type TerminalError struct {
 	Inner error
 }

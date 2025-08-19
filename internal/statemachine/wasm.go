@@ -3,6 +3,7 @@ package statemachine
 import (
 	"context"
 	_ "embed"
+	stderrors "errors"
 	"fmt"
 	"github.com/restatedev/sdk-go/internal/errors"
 	pbinternal "github.com/restatedev/sdk-go/internal/generated"
@@ -1138,7 +1139,7 @@ func (sm *StateMachine) Free(ctx context.Context) error {
 func wasmFailureToGoError(failure *pbinternal.Failure) error {
 	return &errors.CodeError{
 		Code:  errors.Code(failure.GetCode()),
-		Inner: fmt.Errorf("[%d] %s", failure.GetCode(), failure.GetMessage()),
+		Inner: stderrors.New(failure.GetMessage()),
 	}
 }
 
